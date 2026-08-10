@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <title>Skaner Butelkomatu</title>
 
   <style>
@@ -21,7 +20,7 @@
 
     #reader {
       width: 100%;
-      max-width: 650px;
+      max-width: 700px;
       margin: 15px auto;
       background: white;
       border-radius: 15px;
@@ -34,7 +33,8 @@
 
     button {
       padding: 14px 22px;
-      font-size: 20px;
+      margin: 6px;
+      font-size: 19px;
       border: 0;
       border-radius: 10px;
       cursor: pointer;
@@ -42,7 +42,7 @@
 
     #result {
       margin: 15px;
-      font-size: 20px;
+      font-size: 21px;
       font-weight: bold;
     }
   </style>
@@ -52,7 +52,13 @@
 
   <h1>📱 SKANER BUTELKOMATU</h1>
 
-  <button id="start">📷 URUCHOM APARAT</button>
+  <button id="start">
+    📷 URUCHOM APARAT
+  </button>
+
+  <button id="switchCamera" disabled>
+    🔄 PRZEŁĄCZ KAMERĘ
+  </button>
 
   <div id="reader"></div>
 
@@ -85,7 +91,6 @@
       measurementId: "G-MC97HBNXVF"
     };
 
-
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
@@ -93,76 +98,113 @@
       doc(db, "butelkomat", "machine");
 
 
+    const codes = [
+      "5900541012638",
+      "5902768153675",
+      "5902078000508",
+      "5900699111481",
+      "5908027130111"
+    ];
+
+
     let scanner = null;
+    let cameras = [];
+    let cameraIndex = 0;
+
     let zablokowany = false;
     let uruchomiony = false;
 
     let audioContext = null;
 
 
-    // 🔊 Krótkie, mocne PIP
+    // 🔊 JEDNO PIP
     function pip() {
 
       if (!audioContext) return;
 
-      const oscillator =
+      const osc =
         audioContext.createOscillator();
 
       const gain =
         audioContext.createGain();
 
-      oscillator.type = "square";
+      osc.type = "square";
+      osc.frequency.value = 1200;
+      gain.gain.value = 0.35;
 
-      oscillator.frequency.value = 1200;
-
-      gain.gain.value = 0.3;
-
-      oscillator.connect(gain);
+      osc.connect(gain);
       gain.connect(audioContext.destination);
 
-      oscillator.start();
+      osc.start();
 
-      oscillator.stop(
+      osc.stop(
         audioContext.currentTime + 0.12
       );
     }
 
 
-    // 📤 Wysyłanie kodu do Firestore
-    async function wyslijKod(code) {
+    // 🔊 DWA PIP
+    function dwaPipy() {
+
+      pip();
+
+      setTimeout(() => {
+        pip();
+      }, 180);
+    }
+
+
+    // 📤 FIREBASE
+    async function wyslijKod(code, poprawny) {
 
       try {
 
         await setDoc(machineRef, {
           code: code,
+          poprawny: poprawny,
           time: Date.now()
         });
-
-        document.getElementById("result").textContent =
-          "✅ ZESKANOWANO!";
 
       } catch (error) {
 
         console.error(error);
 
-        document.getElementById("result").textContent =
-          "❌ BŁĄD WYSYŁANIA";
-
       }
     }
 
 
-    // 📷 Udany skan
-    function onScanSuccess(code) {
+    // 📷 SKAN
+    function onScanSuccess(decodedText) {
 
-      // Blokada wszystkich kodów na 3 sekundy
       if (zablokowany) return;
 
       zablokowany = true;
 
-      pip();
+      const code = decodedText.trim();
 
-      wyslijKod(code);
+      const poprawny =
+        codes.includes(code);
+
+
+      if (poprawny) {
+
+        pip();
+
+        document.getElementById("result").textContent =
+          "🟢 PRAWIDŁOWA BUTELKA — PIP!";
+
+      } else {
+
+        dwaPipy();
+
+        document.getElementById("result").textContent =
+          "🔴 NIEPRAWIDŁOWA BUTELKA — PIP PIP!";
+
+      }
+
+
+      wyslijKod(code, poprawny);
+
 
       setTimeout(() => {
 
@@ -175,100 +217,152 @@
     }
 
 
-    // ▶️ Uruchomienie aparatu
+    // 📷 URUCHOM KAMERĘ
+    async function startCamera(cameraId) {
+
+      if (!scanner) {
+        scanner = new Html5Qrcode("reader");
+      }
+
+      if (scanner.isScanning) {
+        await scanner.stop();
+      }
+
+      await scanner.start(
+        cameraId,
+
+        {
+          fps: 20,
+
+          qrbox: {
+            width: 550,
+            height: 250
+          },
+
+          aspectRatio: 1.7777778,
+
+          formatsToSupport: [
+
+            Html5QrcodeSupportedFormats.EAN_13,
+            Html5QrcodeSupportedFormats.EAN_8,
+            Html5QrcodeSupportedFormats.UPC_A,
+            Html5QrcodeSupportedFormats.UPC_E,
+            Html5QrcodeSupportedFormats.QR_CODE
+
+          ]
+        },
+
+        onScanSuccess,
+
+        function () {}
+
+      );
+
+      document.getElementById("result").textContent =
+        "📷 GOTOWY — KAMERA " +
+        (cameraIndex + 1);
+    }
+
+
+    // ▶️ START
     document.getElementById("start").onclick =
       async function () {
 
         if (uruchomiony) return;
 
-        uruchomiony = true;
-
-        document.getElementById("result").textContent =
-          "📷 URUCHAMIANIE APARATU...";
-
-
-        // Dźwięk uruchamiamy po kliknięciu
         try {
 
           audioContext =
-            new (window.AudioContext ||
-                 window.webkitAudioContext)();
+            new (
+              window.AudioContext ||
+              window.webkitAudioContext
+            )();
 
           await audioContext.resume();
 
-        } catch (e) {
+        } catch (e) {}
 
-          audioContext = null;
-
-        }
+        document.getElementById("result").textContent =
+          "📷 URUCHAMIANIE...";
 
 
         try {
 
-          scanner =
-            new Html5Qrcode("reader");
-
-
-          const cameras =
+          cameras =
             await Html5Qrcode.getCameras();
 
 
           if (!cameras.length) {
-
-            throw new Error("Brak aparatu");
-
+            throw new Error("Brak kamer");
           }
-                  // Szukamy tylnej kamery
-          let cameraId = cameras[0].id;
 
-          const tylna = cameras.find(camera =>
+
+          // Najpierw próbujemy znaleźć tylną kamerę
+          let tylna = cameras.findIndex(camera =>
             /back|rear|environment|tyl/i.test(
               camera.label
             )
           );
 
-          if (tylna) {
-            cameraId = tylna.id;
+
+          if (tylna >= 0) {
+            cameraIndex = tylna;
+          } else {
+            cameraIndex = 0;
           }
 
 
-          await scanner.start(
-
-            cameraId,
-
-            {
-              fps: 15,
-
-              qrbox: {
-                width: 500,
-                height: 220
-              },
-
-              aspectRatio: 1.7777778
-            },
-
-            onScanSuccess,
-
-            function () {}
-
+          await startCamera(
+            cameras[cameraIndex].id
           );
 
 
-          document.getElementById("result").textContent =
-            "📷 GOTOWY — USTAW KOD W RAMCE";
+          uruchomiony = true;
+
+          document.getElementById("switchCamera")
+            .disabled = false;
 
 
         } catch (error) {
 
           console.error(error);
 
-          uruchomiony = false;
-
           document.getElementById("result").textContent =
             "❌ NIE MOŻNA URUCHOMIĆ APARATU";
 
         }
+      };
 
+
+    // 🔄 PRZEŁĄCZ KAMERĘ
+    document.getElementById("switchCamera")
+      .onclick = async function () {
+
+        if (!cameras.length) return;
+
+        try {
+
+          cameraIndex++;
+
+          if (cameraIndex >= cameras.length) {
+            cameraIndex = 0;
+          }
+
+          document.getElementById("result").textContent =
+            "🔄 ZMIANA KAMERY...";
+
+          await startCamera(
+            cameras[cameraIndex].id
+          );
+
+        } catch (error) {
+
+          console.error(error);
+
+          document.getElementById("result").textContent =
+            "❌ NIE MOŻNA ZMIENIĆ KAMERY";
+
+        }
       };
 
   </script>
