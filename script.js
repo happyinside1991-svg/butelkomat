@@ -9,20 +9,6 @@ const codes = [
   "5908027130111"
 ];
 
-function updateReceipt() {
-  const moneyText = money.toFixed(2).replace(".", ",") + " zł";
-
-  document.getElementById("count").textContent = count;
-  document.getElementById("money").textContent = moneyText;
-
-  document.getElementById("receiptCount").textContent = count;
-  document.getElementById("receiptTotal").textContent = moneyText;
-  document.getElementById("receiptTotalBig").textContent = moneyText;
-
-  document.getElementById("receiptDate").textContent =
-    new Date().toLocaleString("pl-PL");
-}
-
 function scan() {
   const code = document.getElementById("code").value.trim();
 
@@ -35,15 +21,26 @@ function scan() {
   count++;
   money += 0.50;
 
+  const moneyText =
+    money.toFixed(2).replace(".", ",") + " zł";
+
   document.getElementById("status").innerHTML =
     "🟢<br>ZWROT PRZYJĘTY!";
 
-  updateReceipt();
+  document.getElementById("count").textContent = count;
+  document.getElementById("money").textContent = moneyText;
+
+  // Aktualizacja bonu od razu po skanie
+  document.getElementById("receiptCount").textContent = count;
+  document.getElementById("receiptTotal").textContent = moneyText;
+  document.getElementById("receiptTotalBig").textContent = moneyText;
+  document.getElementById("receiptDate").textContent =
+    new Date().toLocaleString("pl-PL");
 
   document.getElementById("code").value = "";
 }
 
+// DRUK = tylko drukowanie, bez żadnego czekania
 function drukujBon() {
-  updateReceipt();
   window.print();
 }
