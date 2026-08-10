@@ -7,11 +7,18 @@
   <link rel="stylesheet" href="style.css">
 
   <style>
-    #receipt{display:none}
+    #receipt {
+      display: none;
+    }
 
-    @media print{
-      body>*{display:none}
-      #receipt{display:block}
+    @media print {
+      body > * {
+        display: none !important;
+      }
+
+      #receipt {
+        display: block !important;
+      }
     }
   </style>
 </head>
@@ -101,7 +108,6 @@
 
   <script src="script.js"></script>
 
-  <!-- FIREBASE + FIRESTORE -->
   <script type="module">
 
     import { initializeApp }
@@ -110,7 +116,6 @@
     import {
       getFirestore,
       doc,
-      setDoc,
       onSnapshot
     } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
 
@@ -129,12 +134,7 @@
 
     const machineRef = doc(db, "butelkomat", "machine");
 
-    window.wyslijKodDoFirebase = async function(code) {
-      await setDoc(machineRef, {
-        code: code,
-        time: Date.now()
-      });
-    };
+    let ostatniCzas = 0;
 
     onSnapshot(machineRef, (snapshot) => {
 
@@ -142,15 +142,18 @@
 
       const data = snapshot.data();
 
-      if (data.code) {
-        document.getElementById("code").value = data.code;
-        scan();
-      }
+      if (!data.code || !data.time) return;
 
+      if (data.time <= ostatniCzas) return;
+
+      ostatniCzas = data.time;
+
+      document.getElementById("code").value = data.code;
+
+      scan();
     });
 
   </script>
 
 </body>
 </html>
-      
