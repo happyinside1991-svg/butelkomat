@@ -1,4 +1,4 @@
-BG zalet count = 0;
+let count = 0;
 let money = 0;
 
 const codes = [
@@ -12,31 +12,27 @@ const codes = [
 function scan() {
   const code = document.getElementById("code").value.trim();
 
-  if (!codes.includes(code)) {
+  if (codes.includes(code)) {
+    count++;
+    money += 0.50;
+
+    const m = money.toFixed(2).replace(".", ",") + " zł";
+
+    document.getElementById("status").innerHTML = "🟢<br>ZWROT PRZYJĘTY!";
+    document.getElementById("count").textContent = count;
+    document.getElementById("money").textContent = m;
+
+    document.getElementById("receiptCount").textContent = count;
+    document.getElementById("receiptTotal").textContent = m;
+    document.getElementById("receiptTotalBig").textContent = m;
+    document.getElementById("receiptDate").textContent =
+      new Date().toLocaleString("pl-PL");
+
+    document.getElementById("code").value = "";
+  } else {
     document.getElementById("status").innerHTML =
       "🔴<br>NIEPRAWIDŁOWE OPAKOWANIE";
-    return;
   }
-
-  count++;
-  money += 0.50;
-
-  const moneyText =
-    money.toFixed(2).replace(".", ",") + " zł";
-
-  document.getElementById("status").innerHTML =
-    "🟢<br>ZWROT PRZYJĘTY!";
-
-  document.getElementById("count").textContent = count;
-  document.getElementById("money").textContent = moneyText;
-
-  document.getElementById("receiptCount").textContent = count;
-  document.getElementById("receiptTotal").textContent = moneyText;
-  document.getElementById("receiptTotalBig").textContent = moneyText;
-  document.getElementById("receiptDate").textContent =
-    new Date().toLocaleString("pl-PL");
-
-  document.getElementById("code").value = "";
 }
 
 function drukujBon() {
