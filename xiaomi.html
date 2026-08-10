@@ -62,7 +62,10 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    const machineRef = doc(db, "butelkomat", "machine");
+    const machineRef =
+      doc(db, "butelkomat", "machine");
+
+    let skanZablokowany = false;
 
     async function wyslijKod(code) {
 
@@ -79,11 +82,24 @@
     }
 
     function onScanSuccess(decodedText) {
+
+      if (skanZablokowany) return;
+
+      skanZablokowany = true;
+
       wyslijKod(decodedText);
+
+      setTimeout(() => {
+        skanZablokowany = false;
+
+        document.getElementById("result").textContent =
+          "📷 Możesz zeskanować następną butelkę";
+
+      }, 3000);
     }
 
     function onScanFailure(error) {
-      // Nic nie robimy podczas szukania kodu
+      // Czekamy na prawidłowy kod
     }
 
     const scanner = new Html5QrcodeScanner(
@@ -98,7 +114,10 @@
       false
     );
 
-    scanner.render(onScanSuccess, onScanFailure);
+    scanner.render(
+      onScanSuccess,
+      onScanFailure
+    );
 
   </script>
 
