@@ -12,12 +12,24 @@
     }
 
     @media print {
-      body > * {
-        display: none !important;
-      }
+  body {
+    margin: 0;
+    background: white;
+  }
 
-      #receipt {
-        display: block !important;
+  .machine,
+  #printReceipt {
+    display: none !important;
+  }
+
+  #receipt {
+    display: block !important;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+}
         position: static !important;
         width: 100% !important;
       }
