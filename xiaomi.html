@@ -1,25 +1,193 @@
-document.getElementById("result").textContent =
-          "📷 GOTOWY — ZESKANUJ NASTĘPNĄ BUTELKĘ";
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-      }, 3000);
+  <title>Skaner Butelkomatu</title>
 
+  <style>
+    body {
+      margin: 0;
+      padding: 15px;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #f5f5f5;
+    }
+
+    h1 {
+      font-size: 26px;
+    }
+
+    #reader {
+      width: 100%;
+      max-width: 650px;
+      margin: 15px auto;
+      background: white;
+      border-radius: 15px;
+      overflow: hidden;
+    }
+
+    #reader video {
+      width: 100% !important;
+    }
+
+    button {
+      padding: 14px 22px;
+      font-size: 20px;
+      border: 0;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    #result {
+      margin: 15px;
+      font-size: 20px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>📱 SKANER BUTELKOMATU</h1>
+
+  <button id="start">📷 URUCHOM APARAT</button>
+
+  <div id="reader"></div>
+
+  <div id="result">
+    Naciśnij „URUCHOM APARAT”
+  </div>
+
+
+  <script src="https://unpkg.com/html5-qrcode"></script>
+
+  <script type="module">
+
+    import { initializeApp }
+      from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
+
+    import {
+      getFirestore,
+      doc,
+      setDoc
+    } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
+
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyD3LTJdwswsJne4r4ZZkjKU0t0jo3U2ls0",
+      authDomain: "butelkomat-89cc1.firebaseapp.com",
+      projectId: "butelkomat-89cc1",
+      storageBucket: "butelkomat-89cc1.firebasestorage.app",
+      messagingSenderId: "299153464601",
+      appId: "1:299153464601:web:8a79bc31882d01e4e03988",
+      measurementId: "G-MC97HBNXVF"
+    };
+
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const machineRef =
+      doc(db, "butelkomat", "machine");
+
+
+    let scanner = null;
+    let zablokowany = false;
+    let uruchomiony = false;
+
+    let audioContext = null;
+
+
+    // 🔊 Krótkie, mocne PIP
+    function pip() {
+
+      if (!audioContext) return;
+
+      const oscillator =
+        audioContext.createOscillator();
+
+      const gain =
+        audioContext.createGain();
+
+      oscillator.type = "square";
+
+      oscillator.frequency.value = 1200;
+
+      gain.gain.value = 0.3;
+
+      oscillator.connect(gain);
+      gain.connect(audioContext.destination);
+
+      oscillator.start();
+
+      oscillator.stop(
+        audioContext.currentTime + 0.12
+      );
     }
 
 
-    document.getElementById("start").addEventListener(
-      "click",
-      async () => {
+    // 📤 Wysyłanie kodu do Firestore
+    async function wyslijKod(code) {
+
+      try {
+
+        await setDoc(machineRef, {
+          code: code,
+          time: Date.now()
+        });
+
+        document.getElementById("result").textContent =
+          "✅ ZESKANOWANO!";
+
+      } catch (error) {
+
+        console.error(error);
+
+        document.getElementById("result").textContent =
+          "❌ BŁĄD WYSYŁANIA";
+
+      }
+    }
+
+
+    // 📷 Udany skan
+    function onScanSuccess(code) {
+
+      // Blokada wszystkich kodów na 3 sekundy
+      if (zablokowany) return;
+
+      zablokowany = true;
+
+      pip();
+
+      wyslijKod(code);
+
+      setTimeout(() => {
+
+        zablokowany = false;
+
+        document.getElementById("result").textContent =
+          "📷 GOTOWY — ZESKANUJ NASTĘPNĄ BUTELKĘ";
+
+      }, 3000);
+    }
+
+
+    // ▶️ Uruchomienie aparatu
+    document.getElementById("start").onclick =
+      async function () {
 
         if (uruchomiony) return;
 
         uruchomiony = true;
 
+        document.getElementById("result").textContent =
+          "📷 URUCHAMIANIE APARATU...";
 
-        /*
-          🔊 Odblokowanie dźwięku
-          po kliknięciu użytkownika.
-        */
 
+        // Dźwięk uruchamiamy po kliknięciu
         try {
 
           audioContext =
@@ -28,15 +196,11 @@ document.getElementById("result").textContent =
 
           await audioContext.resume();
 
-        } catch (error) {
+        } catch (e) {
 
-          console.log("Audio niedostępne");
+          audioContext = null;
 
         }
-
-
-        document.getElementById("result").textContent =
-          "📷 Uruchamianie aparatu...";
 
 
         try {
@@ -49,32 +213,19 @@ document.getElementById("result").textContent =
             await Html5Qrcode.getCameras();
 
 
-          if (!cameras || cameras.length === 0) {
+          if (!cameras.length) {
 
-            document.getElementById("result").textContent =
-              "❌ Nie znaleziono aparatu";
+            throw new Error("Brak aparatu");
 
-            uruchomiony = false;
-
-            return;
           }
+                  // Szukamy tylnej kamery
+          let cameraId = cameras[0].id;
 
-
-          /*
-            📷 Szukamy tylnej kamery
-          */
-
-          let cameraId =
-            cameras[0].id;
-
-
-          const tylna =
-            cameras.find(camera =>
-              /back|rear|environment|tyl/i.test(
-                camera.label
-              )
-            );
-
+          const tylna = cameras.find(camera =>
+            /back|rear|environment|tyl/i.test(
+              camera.label
+            )
+          );
 
           if (tylna) {
             cameraId = tylna.id;
@@ -86,7 +237,6 @@ document.getElementById("result").textContent =
             cameraId,
 
             {
-
               fps: 15,
 
               qrbox: {
@@ -94,17 +244,12 @@ document.getElementById("result").textContent =
                 height: 220
               },
 
-              aspectRatio: 1.7777778,
-
-              experimentalFeatures: {
-                useBarCodeDetectorIfSupported: true
-              }
-
+              aspectRatio: 1.7777778
             },
 
             onScanSuccess,
 
-            () => {}
+            function () {}
 
           );
 
@@ -124,8 +269,7 @@ document.getElementById("result").textContent =
 
         }
 
-      }
-    );
+      };
 
   </script>
 
