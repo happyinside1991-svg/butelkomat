@@ -7,11 +7,20 @@
   <link rel="stylesheet" href="style.css">
 
   <style>
-    #receipt{display:none}
+    #receipt {
+      display: none;
+    }
 
-    @media print{
-      body > *{display:none!important}
-      #receipt{display:block!important}
+    @media print {
+      body > * {
+        display: none !important;
+      }
+
+      #receipt {
+        display: block !important;
+        position: static !important;
+        width: 100% !important;
+      }
     }
   </style>
 </head>
@@ -46,10 +55,12 @@
   </div>
 
   <button id="printReceipt" onclick="drukujBon()">
-    DRUKUJ BON
+    🧾 DRUKUJ BON
   </button>
 
   <div id="receipt">
+
+    <h2>BUTELKOMAT ♻️</h2>
 
     <div class="receipt-divider">
       --------------------------------
@@ -84,16 +95,16 @@
       --------------------------------
     </div>
 
-    <p class="receipt-date">
+    <p>
       Data: <span id="receiptDate"></span>
     </p>
 
-    <p class="receipt-thanks">
-      DZIĘKUJEMY!<br>
-      ZA ZWROT OPAKOWAŃ ♻
+    <p>
+      <b>DZIĘKUJEMY!</b><br>
+      ZA ZWROT OPAKOWAŃ ♻️
     </p>
 
-    <p class="receipt-footer">
+    <p>
       Zachowaj bon do realizacji kaucji.
     </p>
 
@@ -109,9 +120,7 @@
     import {
       getFirestore,
       doc,
-      onSnapshot,
-      updateDoc,
-      serverTimestamp
+      onSnapshot
     } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -126,13 +135,15 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-
     const machineRef = doc(db, "butelkomat", "machine");
 
-    let pierwszeOdczytanie = true;
-    let ostatniCzas = 0;
+    /*
+      Ignorujemy kod, który był zapisany
+      zanim strona została uruchomiona.
+    */
+    const startTime = Date.now();
 
-    onSnapshot(machineRef, async (snapshot) => {
+    onSnapshot(machineRef, (snapshot) => {
 
       if (!snapshot.exists()) return;
 
@@ -140,32 +151,11 @@
 
       if (!data.code || !data.time) return;
 
-      // Ignoruj stary kod zapisany przed wejściem na stronę
-      if (pierwszeOdczytanie) {
-        ostatniCzas = data.time;
-        pierwszeOdczytanie = false;
-        return;
-      }
-
-      // Ignoruj ten sam skan
-      if (data.time <= ostatniCzas) return;
-
-      ostatniCzas = data.time;
+      if (data.time <= startTime) return;
 
       document.getElementById("code").value = data.code;
 
       scan();
-
-      // Oznacz kod jako obsłużony
-      try {
-        await updateDoc(machineRef, {
-          processed: true,
-          processedAt: serverTimestamp()
-        });
-      } catch (e) {
-        console.log(e);
-      }
-
     });
 
   </script>
