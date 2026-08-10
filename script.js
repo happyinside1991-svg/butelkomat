@@ -32,7 +32,7 @@ function scan() {
   } else {
     document.getElementById("status").innerHTML =
       "🔴<br>NIEPRAWIDŁOWE OPAKOWANIE";
-  }
+  
 }
 function drukujBon() {
   window.print();
