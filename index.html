@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pl">
 <head>
@@ -9,9 +8,10 @@
 
   <style>
     #receipt{display:none}
+
     @media print{
-      body>*{display:none!important}
-      #receipt{display:block!important}
+      body>*{display:none}
+      #receipt{display:block}
     }
   </style>
 </head>
@@ -101,9 +101,18 @@
 
   <script src="script.js"></script>
 
+  <!-- FIREBASE + FIRESTORE -->
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-analytics.js";
+
+    import { initializeApp }
+      from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
+
+    import {
+      getFirestore,
+      doc,
+      setDoc,
+      onSnapshot
+    } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyD3LTJdwswsJne4r4ZZkjKU0t0jo3U2ls0",
@@ -116,9 +125,32 @@
     };
 
     const app = initializeApp(firebaseConfig);
-    const analytics = getAnalytics(app);
+    const db = getFirestore(app);
+
+    const machineRef = doc(db, "butelkomat", "machine");
+
+    window.wyslijKodDoFirebase = async function(code) {
+      await setDoc(machineRef, {
+        code: code,
+        time: Date.now()
+      });
+    };
+
+    onSnapshot(machineRef, (snapshot) => {
+
+      if (!snapshot.exists()) return;
+
+      const data = snapshot.data();
+
+      if (data.code) {
+        document.getElementById("code").value = data.code;
+        scan();
+      }
+
+    });
+
   </script>
 
 </body>
 </html>
-
+      
