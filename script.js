@@ -10,40 +10,64 @@ const codes = [
 ];
 
 function scan() {
+
   const code = document.getElementById("code").value.trim();
 
   if (codes.includes(code)) {
+
     count++;
     money += 0.50;
 
-    const moneyText = money.toFixed(2).replace(".", ",") + " zł";
+    const moneyText =
+      money.toFixed(2).replace(".", ",") + " zł";
 
     document.getElementById("status").innerHTML =
       "🟢<br>ZWROT PRZYJĘTY!";
 
-    document.getElementById("count").textContent = count;
-    document.getElementById("money").textContent = moneyText;
+    document.getElementById("count").textContent =
+      count;
 
-    document.getElementById("receiptCount").textContent = count;
-    document.getElementById("receiptTotal").textContent = moneyText;
-    document.getElementById("receiptTotalBig").textContent = moneyText;
+    document.getElementById("money").textContent =
+      moneyText;
+
+    document.getElementById("receiptCount").textContent =
+      count;
+
+    document.getElementById("receiptTotal").textContent =
+      moneyText;
+
+    document.getElementById("receiptTotalBig").textContent =
+      moneyText;
+
     document.getElementById("receiptDate").textContent =
       new Date().toLocaleString("pl-PL");
 
   } else {
+
     document.getElementById("status").innerHTML =
       "🔴<br>NIEPRAWIDŁOWE OPAKOWANIE";
+
   }
 }
 
-function drukujBon() {
-  const moneyText = money.toFixed(2).replace(".", ",") + " zł";
+window.drukujBon = function() {
 
-  document.getElementById("receiptCount").textContent = count;
-  document.getElementById("receiptTotal").textContent = moneyText;
-  document.getElementById("receiptTotalBig").textContent = moneyText;
+  const moneyText =
+    money.toFixed(2).replace(".", ",") + " zł";
+
+  document.getElementById("receiptCount").textContent =
+    count;
+
+  document.getElementById("receiptTotal").textContent =
+    moneyText;
+
+  document.getElementById("receiptTotalBig").textContent =
+    moneyText;
+
   document.getElementById("receiptDate").textContent =
     new Date().toLocaleString("pl-PL");
 
-  window.print();
-}
+  setTimeout(() => {
+    window.print();
+  }, 100);
+};
