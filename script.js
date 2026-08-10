@@ -28,3 +28,4 @@ function scan() {
       "🔴<br>NIEPRAWIDŁOWE OPAKOWANIE";
   }
 }
+function drukujBon() { window.print(); }
