@@ -7,18 +7,11 @@
   <link rel="stylesheet" href="style.css">
 
   <style>
-    #receipt {
-      display: none;
-    }
+    #receipt{display:none}
 
-    @media print {
-      body > * {
-        display: none !important;
-      }
-
-      #receipt {
-        display: block !important;
-      }
+    @media print{
+      body > *{display:none!important}
+      #receipt{display:block!important}
     }
   </style>
 </head>
@@ -116,7 +109,9 @@
     import {
       getFirestore,
       doc,
-      onSnapshot
+      onSnapshot,
+      updateDoc,
+      serverTimestamp
     } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -134,9 +129,10 @@
 
     const machineRef = doc(db, "butelkomat", "machine");
 
+    let pierwszeOdczytanie = true;
     let ostatniCzas = 0;
 
-    onSnapshot(machineRef, (snapshot) => {
+    onSnapshot(machineRef, async (snapshot) => {
 
       if (!snapshot.exists()) return;
 
@@ -144,6 +140,14 @@
 
       if (!data.code || !data.time) return;
 
+      // Ignoruj stary kod zapisany przed wejściem na stronę
+      if (pierwszeOdczytanie) {
+        ostatniCzas = data.time;
+        pierwszeOdczytanie = false;
+        return;
+      }
+
+      // Ignoruj ten sam skan
       if (data.time <= ostatniCzas) return;
 
       ostatniCzas = data.time;
@@ -151,6 +155,17 @@
       document.getElementById("code").value = data.code;
 
       scan();
+
+      // Oznacz kod jako obsłużony
+      try {
+        await updateDoc(machineRef, {
+          processed: true,
+          processedAt: serverTimestamp()
+        });
+      } catch (e) {
+        console.log(e);
+      }
+
     });
 
   </script>
