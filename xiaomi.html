@@ -19,9 +19,15 @@
     }
 
     #result {
-      font-size: 24px;
+      font-size: 22px;
       margin: 20px;
       font-weight: bold;
+    }
+
+    button {
+      font-size: 20px;
+      padding: 12px 20px;
+      margin: 10px;
     }
   </style>
 </head>
@@ -30,10 +36,14 @@
 
   <h1>📱 SKANER BUTELKOMATU</h1>
 
+  <button id="start">
+    📷 URUCHOM APARAT
+  </button>
+
   <div id="reader"></div>
 
   <div id="result">
-    Czekam na kod...
+    Naciśnij „URUCHOM APARAT”
   </div>
 
   <script src="https://unpkg.com/html5-qrcode"></script>
@@ -49,6 +59,7 @@
       setDoc
     } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
 
+
     const firebaseConfig = {
       apiKey: "AIzaSyD3LTJdwswsJne4r4ZZkjKU0t0jo3U2ls0",
       authDomain: "butelkomat-89cc1.firebaseapp.com",
@@ -59,30 +70,47 @@
       measurementId: "G-MC97HBNXVF"
     };
 
+
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
     const machineRef =
       doc(db, "butelkomat", "machine");
 
+
     let skanZablokowany = false;
+    let scanner = null;
+
 
     async function wyslijKod(code) {
 
       document.getElementById("result").textContent =
         "📤 Wysyłanie: " + code;
 
-      await setDoc(machineRef, {
-        code: code,
-        time: Date.now()
-      });
+      try {
 
-      document.getElementById("result").textContent =
-        "✅ Wysłano: " + code;
+        await setDoc(machineRef, {
+          code: code,
+          time: Date.now()
+        });
+
+        document.getElementById("result").textContent =
+          "✅ Wysłano: " + code;
+
+      } catch (error) {
+
+        console.error(error);
+
+        document.getElementById("result").textContent =
+          "❌ Błąd wysyłania";
+
+      }
     }
+
 
     function onScanSuccess(decodedText) {
 
+      // BLOKADA DLA WSZYSTKICH KODÓW
       if (skanZablokowany) return;
 
       skanZablokowany = true;
@@ -90,6 +118,7 @@
       wyslijKod(decodedText);
 
       setTimeout(() => {
+
         skanZablokowany = false;
 
         document.getElementById("result").textContent =
@@ -98,25 +127,77 @@
       }, 3000);
     }
 
-    function onScanFailure(error) {
-      // Czekamy na prawidłowy kod
-    }
 
-    const scanner = new Html5QrcodeScanner(
-      "reader",
-      {
-        fps: 10,
-        qrbox: {
-          width: 300,
-          height: 150
+    document.getElementById("start").addEventListener(
+      "click",
+      async () => {
+
+        document.getElementById("result").textContent =
+          "📷 Uruchamianie aparatu...";
+
+        try {
+
+          scanner = new Html5Qrcode("reader");
+
+          const cameras =
+            await Html5Qrcode.getCameras();
+
+          if (!cameras || cameras.length === 0) {
+
+            document.getElementById("result").textContent =
+              "❌ Nie znaleziono aparatu";
+
+            return;
+          }
+
+
+          // Szukamy tylnej kamery
+          let cameraId = cameras[0].id;
+
+          const tylna =
+            cameras.find(camera =>
+              /back|rear|environment|tyl/i.test(
+                camera.label
+              )
+            );
+
+          if (tylna) {
+            cameraId = tylna.id;
+          }
+
+
+          await scanner.start(
+            cameraId,
+
+            {
+              fps: 10,
+
+              qrbox: {
+                width: 300,
+                height: 150
+              }
+            },
+
+            onScanSuccess,
+
+            () => {}
+          );
+
+
+          document.getElementById("result").textContent =
+            "📷 Aparat działa — zeskanuj kod";
+
+
+        } catch (error) {
+
+          console.error(error);
+
+          document.getElementById("result").textContent =
+            "❌ Nie można uruchomić aparatu. Sprawdź zgodę na aparat.";
+
         }
-      },
-      false
-    );
 
-    scanner.render(
-      onScanSuccess,
-      onScanFailure
+      }
     );
 
   </script>
