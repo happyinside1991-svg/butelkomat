@@ -3,174 +3,198 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>Butelkomat</title>
-  <link rel="stylesheet" href="style.css">
 
   <style>
-    #receipt {
-      display: none;
+
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+      background: #f2f2f2;
+      text-align: center;
     }
+
+    h1 {
+      font-size: 34px;
+      margin-bottom: 25px;
+    }
+
+    .box {
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      padding: 25px;
+      border-radius: 20px;
+    }
+
+    input {
+      width: 90%;
+      padding: 15px;
+      font-size: 20px;
+      border-radius: 10px;
+      border: 1px solid #aaa;
+      margin-bottom: 12px;
+      box-sizing: border-box;
+    }
+
+    button {
+      padding: 15px 22px;
+      font-size: 20px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      margin: 5px;
+    }
+
+    #status {
+      margin: 20px 0;
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    #count {
+      font-size: 35px;
+      font-weight: bold;
+    }
+
+    #money {
+      font-size: 35px;
+      font-weight: bold;
+    }
+
+    /* =========================
+       BON
+       ========================= */
+
+    #receipt {
+      display: block;
+      margin: 30px auto;
+      padding: 20px;
+      max-width: 400px;
+      background: white;
+      border: 2px dashed #333;
+      text-align: left;
+      box-sizing: border-box;
+    }
+
+    #receipt h2 {
+      text-align: center;
+    }
+
+    #receiptTotalBig {
+      text-align: center;
+      font-size: 35px;
+      font-weight: bold;
+      margin-top: 20px;
+    }
+
+
+    /* =========================
+       DRUKOWANIE
+       ========================= */
 
     @media print {
-  body {
-    margin: 0;
-    background: white;
-  }
 
-  .machine,
-  #printReceipt {
-    display: none !important;
-  }
+      body {
+        background: white !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        visibility: hidden !important;
+      }
 
-  #receipt {
-    display: block !important;
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-  }
-}
-        position: static !important;
+      #receipt {
+        visibility: visible !important;
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
         width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 15px !important;
+        border: none !important;
+      }
+
+      #receipt * {
+        visibility: visible !important;
       }
     }
+
   </style>
 </head>
 
+
 <body>
 
-  <div class="machine">
+  <div class="box">
+
     <h1>♻️ BUTELKOMAT</h1>
 
-    <div id="status">
-      🧴<br>
-      OCZEKUJĘ NA BUTELKĘ
-    </div>
+    <input
+      id="code"
+      type="text"
+      inputmode="numeric"
+      placeholder="Wpisz kod kreskowy"
+    >
 
-    <div class="stats">
-      <div>
-        Butelki<br>
-        <b id="count">0</b>
-      </div>
-
-      <div>
-        Kaucja<br>
-        <b id="money">0,00 zł</b>
-      </div>
-    </div>
-
-    <input id="code" placeholder="Kod kreskowy">
+    <br>
 
     <button onclick="scan()">
       🔎 SPRAWDŹ KOD
     </button>
-  </div>
-  
-<button onclick="drukujBon()">
-  🖨️DRUKUJ BON🧾
-</button>
-  
-  <div id="receipt">
 
-    <h2>BUTELKOMAT ♻️</h2>
-
-    <div class="receipt-divider">
-      --------------------------------
+    <div id="status">
+      GOTOWY
     </div>
 
-    <div class="receipt-row">
-      <span>OPAKOWANIA</span>
-      <strong>
-        <span id="receiptCount">0</span> szt.
-      </strong>
+    <div>
+      Butelki:
+      <span id="count">0</span>
     </div>
 
-    <div class="receipt-row">
-      <span>KAUCJA</span>
-      <strong>
-        <span id="receiptTotal">0,00 zł</span>
-      </strong>
+    <div>
+      Kaucja:
+      <span id="money">0,00 zł</span>
     </div>
 
-    <div class="receipt-divider">
-      --------------------------------
+
+    <!-- BON -->
+
+    <div id="receipt">
+
+      <h2>🧾 BON BUTELKOMATU</h2>
+
+      <p>
+        Liczba butelek:
+        <strong id="receiptCount">0</strong>
+      </p>
+
+      <p>
+        Kaucja:
+        <strong id="receiptTotal">0,00 zł</strong>
+      </p>
+
+      <p>
+        Data:
+        <span id="receiptDate">-</span>
+      </p>
+
+      <div id="receiptTotalBig">
+        0,00 zł
+      </div>
+
     </div>
 
-    <div class="receipt-big">
-      <span>DO ODBIORU</span>
-      <strong>
-        <span id="receiptTotalBig">0,00 zł</span>
-      </strong>
-    </div>
 
-    <div class="receipt-divider">
-      --------------------------------
-    </div>
-
-    <p>
-      Data: <span id="receiptDate"></span>
-    </p>
-
-    <p>
-      <b>DZIĘKUJEMY!</b><br>
-      ZA ZWROT OPAKOWAŃ ♻️
-    </p>
-
-    <p>
-      Zachowaj bon do realizacji kaucji.
-    </p>
+    <button onclick="drukujBon()">
+      🖨️ DRUKUJ BON
+    </button>
 
   </div>
+
 
   <script src="script.js"></script>
-
-  <script type="module">
-
-    import { initializeApp }
-      from "https://www.gstatic.com/firebasejs/12.17.1/firebase-app.js";
-
-    import {
-      getFirestore,
-      doc,
-      onSnapshot
-    } from "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyD3LTJdwswsJne4r4ZZkjKU0t0jo3U2ls0",
-      authDomain: "butelkomat-89cc1.firebaseapp.com",
-      projectId: "butelkomat-89cc1",
-      storageBucket: "butelkomat-89cc1.firebasestorage.app",
-      messagingSenderId: "299153464601",
-      appId: "1:299153464601:web:8a79bc31882d01e4e03988",
-      measurementId: "G-MC97HBNXVF"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const machineRef = doc(db, "butelkomat", "machine");
-
-    /*
-      Ignorujemy kod, który był zapisany
-      zanim strona została uruchomiona.
-    */
-    const startTime = Date.now();
-
-    onSnapshot(machineRef, (snapshot) => {
-
-      if (!snapshot.exists()) return;
-
-      const data = snapshot.data();
-
-      if (!data.code || !data.time) return;
-
-      if (data.time <= startTime) return;
-
-      document.getElementById("code").value = data.code;
-
-      scan();
-    });
-
-  </script>
 
 </body>
 </html>
