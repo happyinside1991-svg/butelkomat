@@ -1,4 +1,4 @@
-let count = 0;
+BG zalet count = 0;
 let money = 0;
 
 const codes = [
@@ -30,7 +30,6 @@ function scan() {
   document.getElementById("count").textContent = count;
   document.getElementById("money").textContent = moneyText;
 
-  // Aktualizacja bonu od razu po skanie
   document.getElementById("receiptCount").textContent = count;
   document.getElementById("receiptTotal").textContent = moneyText;
   document.getElementById("receiptTotalBig").textContent = moneyText;
@@ -40,7 +39,6 @@ function scan() {
   document.getElementById("code").value = "";
 }
 
-// DRUK = tylko drukowanie, bez żadnego czekania
 function drukujBon() {
   window.print();
 }
