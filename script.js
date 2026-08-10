@@ -32,8 +32,8 @@ function scan() {
   } else {
     document.getElementById("status").innerHTML =
       "🔴<br>NIEPRAWIDŁOWE OPAKOWANIE";
-  
+  } 
 }
-function drukujBon() {
+function drukujBon(){
   window.print();
 }
